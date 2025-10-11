@@ -2,12 +2,14 @@ import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
 import * as bcrypt from "bcrypt";
 import { IPaginationOptions } from "../../../interfaces/paginations";
-import { paginationHelper } from "../../../helpars/paginationHelper";
+import { paginationHelper } from "../../../helpers/paginationHelper";
 import { Prisma, User } from "@prisma/client";
 import { userSearchAbleFields } from "./user.costant";
 import config from "../../../config";
-import { fileUploader } from "../../../helpars/fileUploader";
+import { fileUploader } from "../../../helpers/fileUploader";
 import { IUserFilterRequest, TUser } from "./user.interface";
+import crypto from "crypto";
+import { emailSender } from "../../../shared/emailSender";
 
 const createUserIntoDb = async (payload: TUser) => {
   const existingUser = await prisma.user.findUnique({
@@ -94,10 +96,10 @@ const getUsersFromDb = async (
   const { page, limit, skip } = paginationHelper.calculatePagination(options);
   const { searchTerm, ...filterData } = params;
 
-  const andCondions: Prisma.UserWhereInput[] = [];
+  const andConditions: Prisma.UserWhereInput[] = [];
 
   if (params.searchTerm) {
-    andCondions.push({
+    andConditions.push({
       OR: userSearchAbleFields.map((field) => ({
         [field]: {
           contains: params.searchTerm,
@@ -108,7 +110,7 @@ const getUsersFromDb = async (
   }
 
   if (Object.keys(filterData).length > 0) {
-    andCondions.push({
+    andConditions.push({
       AND: Object.keys(filterData).map((key) => ({
         [key]: {
           equals: (filterData as any)[key],
@@ -116,10 +118,10 @@ const getUsersFromDb = async (
       })),
     });
   }
-  const whereConditons: Prisma.UserWhereInput = { AND: andCondions };
+  const whereConditions: Prisma.UserWhereInput = { AND: andConditions };
 
   const result = await prisma.user.findMany({
-    where: whereConditons,
+    where: whereConditions,
     skip,
     orderBy:
       options.sortBy && options.sortOrder
@@ -139,7 +141,7 @@ const getUsersFromDb = async (
     },
   });
   const total = await prisma.user.count({
-    where: whereConditons,
+    where: whereConditions,
   });
 
   if (!result || result.length === 0) {
@@ -181,7 +183,7 @@ const updateProfile = async (payload: User, imageFile: any, userId: string) => {
 
     const createUserProfile = await prisma.user.update({
       where: { id: userId },
-      data: { ...payload, profileImage: image },
+      data: { ...payload, image },
     });
 
     return createUserProfile;

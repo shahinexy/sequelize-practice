@@ -1,5 +1,5 @@
 import config from "../../../../config";
-import { jwtHelpers } from "../../../../helpars/jwtHelpers";
+import { jwtHelpers } from "../../../../helpers/jwtHelpers";
 import prisma from "../../../../shared/prisma";
 import { ExtendedSocket } from "../types";
 import { Server } from "socket.io";
@@ -15,7 +15,9 @@ export async function handleAuthenticate(
   const token = data.token;
 
   if (!token) {
-    socket.emit("socketError", { message: "Authentication token not provided." });
+    socket.emit("socketError", {
+      message: "Authentication token not provided.",
+    });
     socket.disconnect(true);
     return;
   }

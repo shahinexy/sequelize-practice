@@ -2,11 +2,11 @@ import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
 import * as bcrypt from "bcrypt";
 import { IPaginationOptions } from "../../../interfaces/paginations";
-import { paginationHelper } from "../../../helpars/paginationHelper";
+import { paginationHelper } from "../../../helpers/paginationHelper";
 import { Prisma, User } from "@prisma/client";
 import { userSearchAbleFields } from "./demo.costant";
 import config from "../../../config";
-import { fileUploader } from "../../../helpars/fileUploader";
+import { fileUploader } from "../../../helpers/fileUploader";
 import { IUserFilterRequest, TUser } from "./demo.interface";
 
 const createUserIntoDb = async (payload: TUser) => {
@@ -113,7 +113,7 @@ const getUsersFromDb = async (
 
 const getSingleUser = async (id: string) => {
   const userProfile = await prisma.user.findUnique({
-    where: {id},
+    where: { id },
     select: {
       id: true,
       fullName: true,

@@ -2,7 +2,7 @@ import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
 import { Prisma } from "@prisma/client";
-import { paginationHelper } from "../../../helpars/paginationHelper";
+import { paginationHelper } from "../../../helpers/paginationHelper";
 import { IPurchasedPlanFilterRequest } from "./purchasedPlan.interface";
 import { IPaginationOptions } from "../../../interfaces/paginations";
 import { purchasedPlanSearchAbleFields } from "./purchasedPlan.costant";

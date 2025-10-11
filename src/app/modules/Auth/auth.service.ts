@@ -1,6 +1,6 @@
 import { Secret } from "jsonwebtoken";
 import config from "../../../config";
-import { jwtHelpers } from "../../../helpars/jwtHelpers";
+import { jwtHelpers } from "../../../helpers/jwtHelpers";
 import prisma from "../../../shared/prisma";
 import * as bcrypt from "bcrypt";
 import ApiError from "../../../errors/ApiErrors";
@@ -264,10 +264,7 @@ const resendOtp = async (email: string) => {
   return { message: "OTP resent successfully" };
 };
 
-const verifyOtp = async (payload: {
-  email: string;
-  otp: number;
-}) => {
+const verifyOtp = async (payload: { email: string; otp: number }) => {
   const user = await prisma.user.findUnique({
     where: { email: payload.email },
     select: {
