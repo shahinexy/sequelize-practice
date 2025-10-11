@@ -13,6 +13,16 @@ const loginUser = async (payload: { email: string; password: string }) => {
     where: {
       email: payload.email,
     },
+    select: {
+      id: true,
+      verifiedEmail: true,
+      activePlan: true,
+      email: true,
+      password: true,
+      role: true,
+      otp: true,
+      expirationOtp: true,
+    },
   });
 
   if (!userData?.email) {
@@ -29,6 +39,55 @@ const loginUser = async (payload: { email: string; password: string }) => {
   if (!isCorrectPassword) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Password incorrect!");
   }
+  if (!userData.verifiedEmail && userData.role !== "ADMIN") {
+    const otp = Number(crypto.randomInt(1000, 9999));
+
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+
+    const html = `
+<div style="font-family: 'Segoe UI', sans-serif; background-color: #f4f4f4; padding: 40px;">
+  <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+    
+    <div style="background-color: #0A4225; padding: 30px; text-align: center;">
+      <h1 style="margin: 0; color: #ffffff; font-size: 26px;">Email verification OTP</h1>
+      <p style="margin: 8px 0 0; color: #e0f7ec; font-size: 14px;">Your One-Time Password (OTP) is below</p>
+    </div>
+    
+    <div style="padding: 30px; text-align: center;">
+      <p style="font-size: 16px; color: #333333; margin-bottom: 10px;">Use the OTP below to verify your email:</p>
+      <p style="font-size: 36px; font-weight: bold; color: #0A4225; margin: 20px 0;">${otp}</p>
+      <p style="font-size: 14px; color: #666666; margin: 0 0 20px;">This code will expire in <strong>10 minutes</strong>.</p>
+    </div>
+
+    <div style="padding: 0 30px 30px; text-align: center;">
+      <p style="font-size: 14px; color: #999999; margin: 0;">If you didn’t request this, you can safely ignore this email.</p>
+      <p style="font-size: 14px; color: #999999; margin: 8px 0 0;">Need help? Contact us at <a href="mailto:support@humkadam.com" style="color: #0A4225; text-decoration: none; font-weight: 500;">support@nmbull.com</a></p>
+    </div>
+
+    <div style="background-color: #f0f0f0; padding: 20px; text-align: center; font-size: 12px; color: #999999;">
+      Best regards,<br/>
+      <strong style="color: #0A4225;">Humkadam Team</strong>
+    </div>
+
+  </div>
+</div>`;
+
+    await emailSender(userData.email, html, "Email varification OTP");
+
+    await prisma.user.update({
+      where: { id: userData.id },
+      data: {
+        otp: otp,
+        expirationOtp: otpExpires,
+      },
+    });
+
+    return {
+      message: "Email verification code sended successfully",
+      verifiedEmail: userData.verifiedEmail,
+    };
+  }
+
   const accessToken = jwtHelpers.generateToken(
     {
       id: userData.id,
@@ -39,7 +98,12 @@ const loginUser = async (payload: { email: string; password: string }) => {
     config.jwt.expires_in as string
   );
 
-  return { token: accessToken };
+  return {
+    role: userData.role,
+    verifiedEmail: userData.verifiedEmail,
+    activePlan: userData.activePlan,
+    token: accessToken,
+  };
 };
 
 const changePassword = async (
@@ -68,7 +132,7 @@ const changePassword = async (
 
   const hashedPassword = await bcrypt.hash(newPassword, 12);
 
-  const result = await prisma.user.update({
+  await prisma.user.update({
     where: {
       id: decodedToken.id,
     },
@@ -76,59 +140,57 @@ const changePassword = async (
       password: hashedPassword,
     },
   });
+
   return { message: "Password changed successfully" };
 };
 
 const forgotPassword = async (payload: { email: string }) => {
-  // Fetch user data or throw if not found
-  console.log(payload);
   const userData = await prisma.user.findFirstOrThrow({
     where: {
       email: payload.email,
     },
   });
 
-  // Generate a new OTP
   const otp = Number(crypto.randomInt(1000, 9999));
 
-  // Set OTP expiration time to 10 minutes from now
   const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
-  // Create the email content
   const html = `
-<div style="font-family: Arial, sans-serif; color: #333; padding: 30px; background: linear-gradient(135deg, #6c63ff, #3f51b5); border-radius: 8px;">
-    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 30px; border-radius: 8px;">
-        <h2 style="color: #ffffff; font-size: 28px; text-align: center; margin-bottom: 20px;">
-            <span style="color: #ffeb3b;">Forgot Password OTP</span>
-        </h2>
-        <p style="font-size: 16px; color: #333; line-height: 1.5; text-align: center;">
-            Your forgot password OTP code is below.
-        </p>
-        <p style="font-size: 32px; font-weight: bold; color: #ff4081; text-align: center; margin: 20px 0;">
-            ${otp}
-        </p>
-        <div style="text-align: center; margin-bottom: 20px;">
-            <p style="font-size: 14px; color: #555; margin-bottom: 10px;">
-                This OTP will expire in <strong>10 minutes</strong>. If you did not request this, please ignore this email.
-            </p>
-            <p style="font-size: 14px; color: #555; margin-bottom: 10px;">
-                If you need assistance, feel free to contact us.
-            </p>
-        </div>
-        <div style="text-align: center; margin-top: 30px;">
-            <p style="font-size: 12px; color: #999; text-align: center;">
-                Best Regards,<br/>
-                <span style="font-weight: bold; color: #3f51b5;">Nmbull Team</span><br/>
-                <a href="mailto:support@nmbull.com" style="color: #ffffff; text-decoration: none; font-weight: bold;">Contact Support</a>
-            </p>
-        </div>
+<div style="font-family: Arial, sans-serif; background-color: #f6f8f7; padding: 40px;">
+  <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden;">
+    
+    <div style="background-color: #0A4225; padding: 25px 0; text-align: center;">
+      <h2 style="color: #ffffff; font-size: 24px; margin: 0;">Forgot Password OTP</h2>
     </div>
-</div> `;
 
-  // Send the OTP email to the user
+    <div style="padding: 30px; text-align: center; color: #333;">
+      <p style="font-size: 16px; margin-bottom: 10px;">
+        Use the OTP code below to reset your password.
+      </p>
+      <p style="font-size: 36px; font-weight: bold; color: #0A4225; margin: 20px 0;">
+        ${otp}
+      </p>
+
+      <p style="font-size: 14px; color: #555; margin-bottom: 20px;">
+        This OTP will expire in <strong>10 minutes</strong>.<br/>
+        If you didn’t request a password reset, you can safely ignore this message.
+      </p>
+
+      <a href="mailto:support@humkadam.com" style="display: inline-block; padding: 10px 20px; background-color: #0A4225; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 10px;">
+        Contact Support
+      </a>
+    </div>
+
+    <div style="background-color: #f1f4f2; text-align: center; padding: 15px; font-size: 12px; color: #777;">
+      <p style="margin: 0;">Best regards,<br/>
+      <strong style="color: #0A4225;">Humkadam Team</strong></p>
+    </div>
+  </div>
+</div>
+`;
+
   await emailSender(userData.email, html, "Forgot Password OTP");
 
-  // Update the user's OTP and expiration in the database
   await prisma.user.update({
     where: { id: userData.id },
     data: {
@@ -141,7 +203,6 @@ const forgotPassword = async (payload: { email: string }) => {
 };
 
 const resendOtp = async (email: string) => {
-  // Check if the user exists
   const user = await prisma.user.findUnique({
     where: { email: email },
   });
@@ -150,49 +211,49 @@ const resendOtp = async (email: string) => {
     throw new ApiError(httpStatus.NOT_FOUND, "This user is not found!");
   }
 
-  // Generate a new OTP
   const otp = Number(crypto.randomInt(1000, 9999));
 
-  // Set OTP expiration time to 5 minutes from now
   const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
 
-  // Create email content
   const html = `
-    <div style="font-family: Arial, sans-serif; color: #333; padding: 30px; background: linear-gradient(135deg, #6c63ff, #3f51b5); border-radius: 8px;">
-        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 30px; border-radius: 8px;">
-            <h2 style="color: #ffffff; font-size: 28px; text-align: center; margin-bottom: 20px;">
-                <span style="color: #ffeb3b;">Resend OTP</span>
-            </h2>
-            <p style="font-size: 16px; color: #333; line-height: 1.5; text-align: center;">
-                Here is your new OTP code to complete the process.
-            </p>
-            <p style="font-size: 32px; font-weight: bold; color: #ff4081; text-align: center; margin: 20px 0;">
-                ${otp}
-            </p>
-            <div style="text-align: center; margin-bottom: 20px;">
-                <p style="font-size: 14px; color: #555; margin-bottom: 10px;">
-                    This OTP will expire in <strong>5 minutes</strong>. If you did not request this, please ignore this email.
-                </p>
-                <p style="font-size: 14px; color: #555; margin-bottom: 10px;">
-                    If you need further assistance, feel free to contact us.
-                </p>
-            </div>
-            <div style="text-align: center; margin-top: 30px;">
-                <p style="font-size: 12px; color: #999; text-align: center;">
-                    Best Regards,<br/>
-                    <span style="font-weight: bold; color: #3f51b5;">levimusuc@team.com</span><br/>
-                    <a href="mailto:support@booksy.buzz.com" style="color: #ffffff; text-decoration: none; font-weight: bold;">Contact Support</a>
-                </p>
-            </div>
-        </div>
+<div style="font-family: Arial, sans-serif; background-color: #f6f8f7; padding: 40px;">
+  <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden;">
+    
+    <div style="background-color: #0A4225; padding: 25px 0; text-align: center;">
+      <h2 style="color: #ffffff; font-size: 24px; margin: 0;">Resend OTP</h2>
     </div>
-  `;
 
-  // Send the OTP to user's email
+    <div style="padding: 30px; text-align: center; color: #333;">
+      <p style="font-size: 16px; margin-bottom: 10px;">
+        Here is your new OTP code to continue the verification process.
+      </p>
+
+      <p style="font-size: 36px; font-weight: bold; color: #0A4225; margin: 20px 0;">
+        ${otp}
+      </p>
+
+      <p style="font-size: 14px; color: #555; margin-bottom: 20px;">
+        This OTP will expire in <strong>5 minutes</strong>.<br/>
+        If you didn’t request this code, please ignore this email.
+      </p>
+
+      <a href="mailto:support@humkadam.com" style="display: inline-block; padding: 10px 20px; background-color: #0A4225; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 10px;">
+        Contact Support
+      </a>
+    </div>
+
+    <!-- Footer -->
+    <div style="background-color: #f1f4f2; text-align: center; padding: 15px; font-size: 12px; color: #777;">
+      <p style="margin: 0;">Best regards,<br/>
+      <strong style="color: #0A4225;">Humkadam Team</strong></p>
+    </div>
+  </div>
+</div>
+`;
+
   await emailSender(user.email, html, "Resend OTP");
 
-  // Update the user's profile with the new OTP and expiration
-  const updatedUser = await prisma.user.update({
+  await prisma.user.update({
     where: { id: user.id },
     data: {
       otp: otp,
@@ -203,20 +264,25 @@ const resendOtp = async (email: string) => {
   return { message: "OTP resent successfully" };
 };
 
-const verifyForgotPasswordOtp = async (payload: {
+const verifyOtp = async (payload: {
   email: string;
   otp: number;
 }) => {
-  // Check if the user exists
   const user = await prisma.user.findUnique({
     where: { email: payload.email },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      otp: true,
+      expirationOtp: true,
+    },
   });
 
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "This user is not found!");
   }
 
-  // Check if the OTP is valid and not expired
   if (
     user.otp !== payload.otp ||
     !user.expirationOtp ||
@@ -225,20 +291,32 @@ const verifyForgotPasswordOtp = async (payload: {
     throw new ApiError(httpStatus.BAD_REQUEST, "Invalid OTP");
   }
 
-  // Update the user's OTP, OTP expiration, and verification status
   await prisma.user.update({
     where: { id: user.id },
     data: {
-      otp: null, // Clear the OTP
-      expirationOtp: null, // Clear the OTP expiration
+      otp: null,
+      expirationOtp: null,
     },
   });
 
-  return { message: "OTP verification successful" };
+  const accessToken = jwtHelpers.generateToken(
+    {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    },
+    config.jwt.jwt_secret as Secret,
+    config.jwt.expires_in as string
+  );
+
+  return {
+    message: "OTP verification successful",
+    role: user.role,
+    token: accessToken,
+  };
 };
 
 const resetPassword = async (payload: { password: string; email: string }) => {
-  // Check if the user exists
   const user = await prisma.user.findUnique({
     where: { email: payload.email },
   });
@@ -247,16 +325,14 @@ const resetPassword = async (payload: { password: string; email: string }) => {
     throw new ApiError(httpStatus.NOT_FOUND, "This user is not found!");
   }
 
-  // Hash the new password
   const hashedPassword = await bcrypt.hash(payload.password, 10);
 
-  // Update the user's password in the database
   await prisma.user.update({
     where: { email: payload.email },
     data: {
-      password: hashedPassword, // Update with the hashed password
-      otp: null, // Clear the OTP
-      expirationOtp: null, // Clear OTP expiration
+      password: hashedPassword,
+      otp: null,
+      expirationOtp: null,
     },
   });
 
@@ -269,5 +345,5 @@ export const AuthServices = {
   forgotPassword,
   resetPassword,
   resendOtp,
-  verifyForgotPasswordOtp,
+  verifyOtp,
 };

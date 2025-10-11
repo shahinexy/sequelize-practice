@@ -45,6 +45,7 @@ const forgotPassword = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
 const resendOtp = catchAsync(async (req, res) => {
   const result = await AuthServices.resendOtp(req.body.email);
   sendResponse(res, {
@@ -53,11 +54,11 @@ const resendOtp = catchAsync(async (req, res) => {
   });
 });
 
-const verifyForgotPasswordOtp = catchAsync(
+const verifyOtp = catchAsync(
   async (req: Request, res: Response) => {
-    const result = await AuthServices.verifyForgotPasswordOtp(req.body);
+    const result = await AuthServices.verifyOtp(req.body);
     sendResponse(res, {
-      message: "Check your email!",
+      message: "OTP verification successful",
       data: result,
     });
   }
@@ -78,5 +79,5 @@ export const AuthController = {
   forgotPassword,
   resetPassword,
   resendOtp,
-  verifyForgotPasswordOtp,
+  verifyOtp,
 };

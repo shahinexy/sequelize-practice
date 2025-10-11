@@ -24,13 +24,19 @@ router.put(
 );
 
 router.post("/forgot-password", AuthController.forgotPassword);
+
 router.post("/resend-otp", AuthController.resendOtp);
+
 router.post(
   "/verify-otp",
   validateRequest(authValidation.otpValidationSchema),
-  AuthController.verifyForgotPasswordOtp
+  AuthController.verifyOtp
 );
 
-router.post("/reset-password", AuthController.resetPassword);
+router.post(
+  "/reset-password",
+  auth(UserRole.USER, UserRole.ADMIN),
+  AuthController.resetPassword
+);
 
 export const AuthRoutes = router;

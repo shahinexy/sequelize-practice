@@ -9,18 +9,18 @@ export const emailSender = async (
     const transporter = nodemailer.createTransport({
       host: "smtp-relay.brevo.com",
       port: 2525,
-      secure: false, 
+      secure: false,
       auth: {
-        user: "88af50003@smtp-brevo.com", 
-        pass: "8bpBA0zPsrY473IZ", 
+        user: "88803c001@smtp-brevo.com",
+        pass: "OzqM8PBhVxbNYEUt",
       },
     });
     const mailOptions = {
-      from: `<smt.team.pixel@gmail.com>`, 
-      to, 
-      subject, 
+      from: `<akonhasan680@gmail.com>`,
+      to,
+      subject,
       text: html.replace(/<[^>]+>/g, ""),
-      html, 
+      html,
     };
 
     const info = await transporter.sendMail(mailOptions);

@@ -1,16 +1,22 @@
 import { Server } from "http";
 import config from "./config";
-
-import prisma from "./shared/prisma";
 import app from "./app";
+import { setupSocketIO } from "./app/modules/SocketIo";
+import { checkPlans } from "./app/modules/PurchasedPlan/purchasedPlan.service";
+import cron from "node-cron";
 
 let server: Server;
 
 async function startServer() {
   server = app.listen(config.port, () => {
-    console.log("Server is listiening on port ", config.port);
+    console.log("Server is listening on port ", config.port);
   });
+  setupSocketIO(server);
 }
+
+cron.schedule("0 0 * * *", async () => {
+  await checkPlans();
+});
 
 async function main() {
   await startServer();
@@ -18,7 +24,7 @@ async function main() {
     if (server) {
       server.close(() => {
         console.info("Server closed!");
-        restartServer(); 
+        restartServer();
       });
     } else {
       process.exit(1);
