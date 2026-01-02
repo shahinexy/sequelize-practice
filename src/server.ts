@@ -1,6 +1,7 @@
 import { Server } from "http";
 import config from "./config";
 import app from "./app";
+import sequelize from "./config/database";
 
 let server: Server;
 
@@ -8,6 +9,14 @@ async function startServer() {
   server = app.listen(config.port, () => {
     console.log("Server is listening on port ", config.port);
   });
+
+  try {
+    await sequelize.authenticate();
+    console.log("Sequelize connected successfully");
+
+  } catch (error) {
+    console.error("Unable to connect to database:", error);
+  }
 }
 
 async function main() {

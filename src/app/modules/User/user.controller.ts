@@ -22,9 +22,8 @@ const getUsers = catchAsync(async (req, res) => {
   });
 });
 
-const getMyProfile = catchAsync(async (req, res) => {
-console.log(req.user.id);
-  const result = await userService.getMyProfile(req.user.id);
+const singleUser = catchAsync(async (req, res) => {
+  const result = await userService.singleUser(req.params.id);
   sendResponse(res, {
     message: "User profile retrieved successfully",
     data: result,
@@ -32,8 +31,7 @@ console.log(req.user.id);
 });
 
 const updateProfile = catchAsync(async (req, res) => {
-  const { id } = req?.user;
-  const result = await userService.updateProfile(req.body, req.file, id);
+  const result = await userService.updateProfile(req.body, req.params.id);
   sendResponse(res, {
     message: "Profile updated successfully!",
     data: result,
@@ -43,6 +41,6 @@ const updateProfile = catchAsync(async (req, res) => {
 export const userController = {
   createUser,
   getUsers,
-  getMyProfile,
+  singleUser,
   updateProfile,
 };

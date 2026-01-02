@@ -10,16 +10,8 @@ const router = express.Router();
 router.route("/").get(userController.getUsers).post(userController.createUser);
 
 router
-  .route("/profile")
-  .get(auth(), userController.getMyProfile)
-  .put(
-    fileUploader.uploadSingle,
-    (req: Request, res: Response, next: NextFunction) => {
-      req.body = JSON.parse(req.body.data);
-      next();
-    },
-    validateRequest(UserValidation.userUpdateSchema),
-    userController.updateProfile
-  );
+  .route("/:id")
+  .get(userController.singleUser)
+  .put(userController.updateProfile);
 
 export const UserRoutes = router;
