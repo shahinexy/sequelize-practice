@@ -1,11 +1,10 @@
-import { UserRole } from "@prisma/client";
+
 
 export type TUser = {
   id?: string;
   fullName: string;
   email: string;
   password: string;
-  role: UserRole;
   isDeleted: boolean;
   expirationOtp?: Date;
   otp?: number;

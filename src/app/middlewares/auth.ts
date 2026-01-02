@@ -6,7 +6,6 @@ import { JwtPayload, Secret } from "jsonwebtoken";
 import httpStatus from "http-status";
 import ApiError from "../../errors/ApiErrors";
 import { jwtHelpers } from "../../helpers/jwtHelpers";
-import prisma from "../../shared/prisma";
 
 const auth = (...roles: string[]) => {
   return async (
@@ -27,14 +26,14 @@ const auth = (...roles: string[]) => {
       );
       const { id, role, iat } = verifiedUser;
 
-      const user = await prisma.user.findUnique({
-        where: {
-          id: id,
-        },
-      });
-      if (!user) {
-        throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
-      }
+      // const user = await prisma.user.findUnique({
+      //   where: {
+      //     id: id,
+      //   },
+      // });
+      // if (!user) {
+      //   throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
+      // }
 
       req.user = verifiedUser as JwtPayload;
 

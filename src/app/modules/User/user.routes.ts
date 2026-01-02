@@ -7,13 +7,11 @@ import { fileUploader } from "../../../helpers/fileUploader";
 
 const router = express.Router();
 
-router.route("/").get(userController.getUsers).post(
-  userController.createUser
-);
+router.route("/").get(userController.getUsers).post(userController.createUser);
 
 router
   .route("/profile")
-  .get( auth(),userController.getMyProfile)
+  .get(auth(), userController.getMyProfile)
   .put(
     fileUploader.uploadSingle,
     (req: Request, res: Response, next: NextFunction) => {
