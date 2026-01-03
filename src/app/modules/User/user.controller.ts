@@ -38,9 +38,18 @@ const updateProfile = catchAsync(async (req, res) => {
   });
 });
 
+const loginUser = catchAsync(async (req, res) => {
+  const result = await userService.loginUser(req.body);
+  sendResponse(res, {
+    message: "Login successfully!",
+    data: result,
+  });
+});
+
 export const userController = {
   createUser,
   getUsers,
   singleUser,
   updateProfile,
+  loginUser,
 };

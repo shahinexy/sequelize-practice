@@ -48,7 +48,3 @@ User.init(
     timestamps: true,
   }
 );
-
-(async () => {
-  await sequelize.sync({ alter: true });
-})();

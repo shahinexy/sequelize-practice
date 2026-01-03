@@ -7,7 +7,19 @@ import { fileUploader } from "../../../helpers/fileUploader";
 
 const router = express.Router();
 
-router.route("/").get(PostController.getPosts).post(PostController.createPost);
+router
+  .route("/")
+  .get(PostController.getPosts)
+  .post(
+    auth(),
+    fileUploader.uploadSingle,
+    (req: Request, res: Response, next: NextFunction) => {
+      req.body = JSON.parse(req.body.data);
+      next();
+    },
+    validateRequest(PostValidation.PostSchema),
+    PostController.createPost
+  );
 
 router
   .route("/:id")
@@ -18,7 +30,7 @@ router
       req.body = JSON.parse(req.body.data);
       next();
     },
-    validateRequest(PostValidation.PostUpdateSchema),
+    validateRequest(PostValidation.UpdatePostSchema),
     PostController.updateProfile
   );
 

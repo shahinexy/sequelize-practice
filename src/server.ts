@@ -2,18 +2,20 @@ import { Server } from "http";
 import config from "./config";
 import app from "./app";
 import sequelize from "./config/database";
+import "./app/models";
 
 let server: Server;
 
 async function startServer() {
-  server = app.listen(config.port, () => {
-    console.log("Server is listening on port ", config.port);
-  });
-
   try {
     await sequelize.authenticate();
     console.log("Sequelize connected successfully");
 
+    await sequelize.sync({ alter: true });
+
+    server = app.listen(config.port, () => {
+      console.log("Server is listening on port ", config.port);
+    });
   } catch (error) {
     console.error("Unable to connect to database:", error);
   }

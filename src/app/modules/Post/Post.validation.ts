@@ -1,22 +1,18 @@
 import { z } from "zod";
 
-const CreatePostValidationSchema = z.object({
-  fullName: z.string(),
-  email: z.string().email("Invalid email address").min(1, "Email is required"), // Ensure email is provided and is valid
-  password: z.string().min(8, "Password must be at least 8 characters long"),
+export const PostSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  isDeleted: z.boolean().optional(),
 });
 
-const PostLoginValidationSchema = z.object({
-  email: z.string().email("Email is required"),
-  password: z.string().min(8, "Password must be at least 8 characters long"),
-});
-
-const PostUpdateSchema = z.object({
-  fullName: z.string().optional(),
+export const UpdatePostSchema = z.object({
+  title: z.string().min(1).optional(),
+  description: z.string().min(1).optional(),
+  isDeleted: z.boolean().optional(),
 });
 
 export const PostValidation = {
-  CreatePostValidationSchema,
-  PostLoginValidationSchema,
-  PostUpdateSchema,
+  PostSchema,
+  UpdatePostSchema,
 };

@@ -5,7 +5,7 @@ import pick from "../../../shared/pick";
 import { PostFilterableFields } from "./Post.costant";
 
 const createPost = catchAsync(async (req, res) => {
-  const result = await PostService.createPostIntoDb(req.body);
+  const result = await PostService.createPostIntoDb(req.body, req.file, req.user.id);
   sendResponse(res, {
     message: "Post Registered successfully!",
     data: result,

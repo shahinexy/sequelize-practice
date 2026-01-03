@@ -1,12 +1,21 @@
-import { DataTypes, Model } from "sequelize";
+import {
+  DataTypes,
+  InferAttributes,
+  InferCreationAttributes,
+  Model,
+} from "sequelize";
 import sequelize from "../../../config/database";
 
-export class Post extends Model {
+export class Post extends Model<
+  InferAttributes<Post>,
+  InferCreationAttributes<Post>
+> {
   declare id: string;
-  declare email: string;
-  declare password: string;
-  declare age: number;
-  declare isStudent: boolean;
+  declare title: string;
+  declare description: string;
+  declare image: string;
+  declare isDeleted: boolean;
+  declare userId: string;
 }
 
 Post.init(
@@ -16,21 +25,25 @@ Post.init(
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    email: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
-    },
-    password: {
+    title: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    age: {
-      type: DataTypes.INTEGER,
+    description: {
+      type: DataTypes.STRING,
       allowNull: false,
     },
-    isStudent: {
+    image: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    isDeleted: {
       type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    userId: {
+      type: DataTypes.UUID,
       allowNull: false,
     },
   },
@@ -40,7 +53,3 @@ Post.init(
     timestamps: true,
   }
 );
-
-(async () => {
-  await sequelize.sync({ alter: true });
-})();
