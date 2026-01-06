@@ -13,8 +13,6 @@ export class User extends Model<
   declare id: string;
   declare email: string;
   declare password: string;
-  declare age: number;
-  declare isStudent: boolean;
 }
 
 User.init(
@@ -31,14 +29,6 @@ User.init(
     },
     password: {
       type: DataTypes.STRING,
-      allowNull: false,
-    },
-    age: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    isStudent: {
-      type: DataTypes.BOOLEAN,
       allowNull: false,
     },
   },

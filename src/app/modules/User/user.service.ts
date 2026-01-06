@@ -57,8 +57,6 @@ const getUsersFromDb = async (
     attributes: [
       "id",
       "email",
-      "age",
-      "isStudent",
       "password",
       [fn("COUNT", col("posts.id")), "postsCount"],
     ],
